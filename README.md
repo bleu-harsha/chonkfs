@@ -45,4 +45,17 @@ The size becomes deeply concerning.
 ## usage
 
 ```bash
-chonkfs file.mp4 --random 500MB
+chonkfs file
+```
+
+> [!WARNING]
+> ⚠️ WIP
+>
+> `chonkfs` is still heavily work-in-progress.
+>
+> Things may:
+> - corrupt files
+> - have incomplete features
+> - behave differently across platforms
+>
+> Use at your own risk.
