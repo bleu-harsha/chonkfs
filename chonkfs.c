@@ -1,10 +1,10 @@
 /*
-*        .__                   __      _____       
-*   ____ |  |__   ____   ____ |  | ___/ ____\______
+* .__                   __      _____       
+* ____ |  |__   ____   ____ |  | ___/ ____\______
 * _/ ___\|  |  \ /  _ \ /    \|  |/ /\   __\/  ___/
 * \  \___|   Y  (  <_> )   |  \    <  |  |  \___ \ 
-*  \___  >___|  /\____/|___|  /__|_ \ |__| /____  >
-*      \/     \/            \/     \/           \/ 
+* \___  >___|  /\____/|___|  /__|_ \ |__| /____  >
+* \/     \/            \/     \/           \/ 
 *
 * compile : gcc chonkfs.c -o chonkfs
 * usage   : ./chonkfs [options]
@@ -27,13 +27,13 @@ uint64_t convert_to_bytes(const char *size_str);
 uint64_t size_to_reach = 0;
 
 int main(int argc, char *argv[]) {
-    bool unn = true;     
+    bool unn = true;   
     if (argc < 2) {
         show_help();
         return EXIT_FAILURE;
     }
 
-    // Check argv elements first to determine if we run defaultize, help, or manual options
+    // First Pass: Extract configurations like --size and --help, and check if we need to defaultize
     for (int i = 2; i < argc; i++) {
         if (strcmp(argv[i], "--help") == 0) {
             show_help();
@@ -42,7 +42,17 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "--null") == 0 || 
             strcmp(argv[i], "--random") == 0 || 
             strcmp(argv[i], "--data") == 0 ){
-            unn = false; //  Necessary options detected, do not defaultize
+            unn = false; 
+        }
+        if (strcmp(argv[i], "--size") == 0){
+            if (i + 1 < argc) {
+                size_to_reach = convert_to_bytes(argv[i + 1]);
+                printf("Setting size to reach: %llu bytes\n", (unsigned long long)size_to_reach);
+                i++; 
+            } else {
+                fprintf(stderr, "Error: --size option requires an argument.\n");
+                return EXIT_FAILURE;
+            }
         }
     }
 
@@ -56,41 +66,29 @@ int main(int argc, char *argv[]) {
         defaultize(file);
     }
     else {
+        // Second Pass: Execute the file inflation operations sequentially
         for (int i = 2; i < argc; i++){
-        
             if (strcmp(argv[i], "--null") == 0){
                 printf("Adding null bytes...\n");
                 nultility(file);
             } 
-        
             else if (strcmp(argv[i], "--random") == 0){
                 printf("Adding random data...\n");
                 randomize(file);
             } 
-        
             else if (strcmp(argv[i], "--data") == 0){
                 if (i + 1 < argc) {
                     printf("Adding data: %s\n", argv[i + 1]);
                     datatize(argv[i + 1], file);
-                    i++; // Skip the data argument value string
+                    i++; 
                 } else {
                     fprintf(stderr, "Error: --data option requires an argument.\n");
                     fclose(file);
                     return EXIT_FAILURE;
                 }
             }
-        
-            else if (strcmp(argv[i], "--size") == 0){
-                if (i + 1 < argc) {
-                    // Convert the size argument to bytes and store it in the global variable
-                    size_to_reach = convert_to_bytes(argv[i + 1]);
-                    printf("Setting size to reach: %llu\n", (unsigned long long)size_to_reach);
-                    i++; // Skip the size numerical value
-                } else {
-                    fprintf(stderr, "Error: --size option requires an argument.\n");
-                    fclose(file);
-                    return EXIT_FAILURE;
-                }
+            else if (strcmp(argv[i], "--size") == 0) {
+                i++; // Safely skip the size value payload during the sequential build phase
             }
             else {
                 fprintf(stderr, "Unknown option: %s\n", argv[i]);
@@ -101,35 +99,113 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Suppress unused warning for size_to_reach until file generator math is hooked up
-    (void)size_to_reach;
-
     fclose(file);
     return EXIT_SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
+// Optimized to append null bytes using fast 1MB chunk buffering
 void nultility(FILE *file){
-    // Put code to add zero bytes here
     fseek(file, 0, SEEK_END);
+    long current_size = ftell(file);
+    
+    if (size_to_reach == 0 || (uint64_t)current_size >= size_to_reach) return;
+    
+    uint64_t bytes_to_add = size_to_reach - (uint64_t)current_size;
+    
+    // Allocate a 1MB buffer chunk on the Heap filled with zeroes
+    size_t chunk_size = 1024 * 1024;
+    char *chunk = calloc(chunk_size, 1);
+    
+    if (!chunk) {
+        // Fallback safety: write byte-by-byte if heap memory allocation fails
+        char null_byte = 0;
+        for (uint64_t i = 0; i < bytes_to_add; i++) {
+            fputc(null_byte, file);
+        }
+        return;
+    }
+
+    // Stream the zeroed buffer chunks rapidly into the file
+    while (bytes_to_add > 0) {
+        size_t to_write = (bytes_to_add > chunk_size) ? chunk_size : (size_t)bytes_to_add;
+        fwrite(chunk, 1, to_write, file);
+        bytes_to_add -= to_write;
+    }
+
+    free(chunk);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 void datatize(char *data, FILE *file){
-    // Put code to add specified custom data string here
-    (void)data;
-    (void)file;
+    fseek(file, 0, SEEK_END);
+    fputs(data, file);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
+// Optimized to append random noise using fast 1MB chunk buffering
 void randomize(FILE *file){
-    // Put code to add random noise here
-    (void)file;
+    fseek(file, 0, SEEK_END);
+    long current_size = ftell(file);
+    
+    if (size_to_reach == 0 || (uint64_t)current_size >= size_to_reach) return;
+
+    uint64_t bytes_to_add = size_to_reach - (uint64_t)current_size;
+    srand((unsigned int)time(NULL));
+
+    // Allocate a 1MB buffer chunk on the Heap
+    size_t chunk_size = 1024 * 1024;
+    char *chunk = malloc(chunk_size);
+    
+    if (!chunk) {
+        // Fallback safety: write byte-by-byte if heap memory allocation fails
+        for(uint64_t i = 0; i < bytes_to_add; i++){
+            fputc(rand() % 256, file);
+        }
+        return;
+    }
+
+    // Fill buffer chunk with random bytes iteratively and stream it out
+    while (bytes_to_add > 0) {
+        size_t to_write = (bytes_to_add > chunk_size) ? chunk_size : (size_t)bytes_to_add;
+        
+        for (size_t i = 0; i < to_write; i++) {
+            chunk[i] = rand() % 256;
+        }
+        
+        fwrite(chunk, 1, to_write, file);
+        bytes_to_add -= to_write;
+    }
+
+    free(chunk);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 void defaultize(FILE *file){
-    // Put code to add default data (e.g., duplicate existing content) here
-    (void)file;
     printf("No options specified. Running defaultize to double file payload...\n");
+    fseek(file, 0, SEEK_END);
+    long original_size = ftell(file);
+    if (original_size <= 0){
+        // If file is completely empty and no size target was set, add a minimal fallback size
+        if (size_to_reach == 0) size_to_reach = 1024; 
+        randomize(file); 
+        return;
+    }
+    
+    char *buffer = malloc(original_size);
+    if (!buffer) {
+        fprintf(stderr, "Memory allocation failed for duplication\n");
+        return;
+    }
+    
+    fseek(file, 0, SEEK_SET);
+    size_t read_bytes = fread(buffer, 1, original_size, file);
+
+    fseek(file, 0, SEEK_END);
+    fwrite(buffer, 1, read_bytes, file);
+    free(buffer);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 void show_help() {
     fprintf(stdout, "        .__                   __      _____       \n");
@@ -144,16 +220,15 @@ void show_help() {
     fprintf(stderr, "  --null                        Add null bytes\n");
     fprintf(stderr, "  --random                      Add random data\n");
     fprintf(stderr, "  --data <string>               Add specific text data\n");
-    fprintf(stderr, "  --size <int,(MB/GB/TB/KB)>     Set total size target\n");
+    fprintf(stderr, "  --size <int,(MB/GB/TB/KB)>    Set total size target\n");
     fprintf(stderr, "  --help                        Show this instruction panel\n");
     fprintf(stderr, "By default the program will generate the file with its size doubled\"\n");
     fprintf(stderr, "Example: chonkfs <file> --null --data \"son\" --size 100MB\n");
 }
-////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////
 uint64_t convert_to_bytes(const char *size_str) {
     char *endptr;
-
     uint64_t value = strtoull(size_str, &endptr, 10);
 
     if (*endptr == '\0') {

@@ -14,7 +14,11 @@ Maybe a prank.
 Maybe psychological warfare.
 Maybe your 2MB image deserves to identify as 14GB.
 
+<<<<<<< HEAD
 
+=======
+---
+>>>>>>> 62e8dc2 (docs(readme): expand README with banner, description, features, and usage)
 
 ## elevator pitch 📢
 
@@ -29,6 +33,10 @@ What if you could make files absurdly heavy for absolutely no reason?
 The original file still works (most of the time).
 The size becomes deeply concerning.
 
+<<<<<<< HEAD
+=======
+---
+>>>>>>> 62e8dc2 (docs(readme): expand README with banner, description, features, and usage)
 
 ## features
 
@@ -40,11 +48,16 @@ The size becomes deeply concerning.
 - no dependencies
 - written in raw C because suffering builds character
 
+<<<<<<< HEAD
 
+=======
+---
+>>>>>>> 62e8dc2 (docs(readme): expand README with banner, description, features, and usage)
 
 ## usage
 
 ```bash
+<<<<<<< HEAD
 chonkfs file
 ```
 
@@ -59,3 +72,10 @@ chonkfs file
 > - behave differently across platforms
 >
 > Use at your own risk.
+=======
+<<<<<<< HEAD
+chonkfs file.mp4 --random 500MB
+=======
+chonkfs file.mp4 --random 500MB
+>>>>>>> 62e8dc2 (docs(readme): expand README with banner, description, features, and usage)
+>>>>>>> 9f9d8eb (feat: add --size option and optimize data generation; clean README)
