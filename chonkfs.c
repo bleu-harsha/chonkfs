@@ -1,15 +1,24 @@
 /*
-* .__                   __      _____       
-* ____ |  |__   ____   ____ |  | ___/ ____\______
+*        .__                   __      _____       
+*   ____ |  |__   ____   ____ |  | ___/ ____\______
 * _/ ___\|  |  \ /  _ \ /    \|  |/ /\   __\/  ___/
 * \  \___|   Y  (  <_> )   |  \    <  |  |  \___ \ 
 * \___  >___|  /\____/|___|  /__|_ \ |__| /____  >
 * \/     \/            \/     \/           \/ 
+* make files heavier than they were
 *
 * compile : gcc chonkfs.c -o chonkfs
 * usage   : ./chonkfs [options]
 */
-
+/*
+*
+* called by attribute for allocate_malloc():
+* main() - 0
+* datatize() - 1
+* randomize() - 2
+* defaultize() - 3
+*
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,26 +29,26 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-void nultility(FILE *file);
 void datatize(char *data, FILE *file);
 void randomize(FILE *file);
 void defaultize(FILE *file);
 void show_help();
-void allocate_malloc();
+void allocate_malloc(FILE **file, int calls);
 void read_data();
 void read_size();
 void output_file();
 uint64_t convert_to_bytes(const char *size_str);
 uint64_t size_to_reach = 0;
+char *malloc_size = NULL;
 
 int main(int argc, char *argv[]) {
+
     bool unn = true;   
     if (argc < 2) {
         show_help();
         return EXIT_FAILURE;
     }
 
-    // First Pass: Extract configurations like --size and --help, and check if we need to defaultize
     for (int i = 2; i < argc; i++) {
         if (strcmp(argv[i], "--help") == 0) {
             show_help();
@@ -63,6 +72,8 @@ int main(int argc, char *argv[]) {
     }
 
     FILE *file = fopen(argv[1], "ab+");
+    allocate_malloc(&file, 0);
+
     if (file == NULL) {
         fprintf(stderr, "Error: Could not open file %s\n", argv[1]);
         return EXIT_FAILURE;
@@ -76,7 +87,6 @@ int main(int argc, char *argv[]) {
         for (int i = 2; i < argc; i++){
             if (strcmp(argv[i], "--null") == 0){
                 printf("Adding null bytes...\n");
-                nultility(file);
             } 
             else if (strcmp(argv[i], "--random") == 0){
                 printf("Adding random data...\n");
@@ -107,39 +117,6 @@ int main(int argc, char *argv[]) {
 
     fclose(file);
     return EXIT_SUCCESS;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// Optimized to append null bytes using fast 1MB chunk buffering
-void nultility(FILE *file){
-    fseek(file, 0, SEEK_END);
-    long current_size = ftell(file);
-    
-    if (size_to_reach == 0 || (uint64_t)current_size >= size_to_reach) return;
-    
-    uint64_t bytes_to_add = size_to_reach - (uint64_t)current_size;
-    
-    // Allocate a 1MB buffer chunk on the Heap filled with zeroes
-    size_t chunk_size = 1024 * 1024;
-    char *chunk = calloc(chunk_size, 1);
-    
-    if (!chunk) {
-        // Fallback safety: write byte-by-byte if heap memory allocation fails
-        char null_byte = 0;
-        for (uint64_t i = 0; i < bytes_to_add; i++) {
-            fputc(null_byte, file);
-        }
-        return;
-    }
-
-    // Stream the zeroed buffer chunks rapidly into the file
-    while (bytes_to_add > 0) {
-        size_t to_write = (bytes_to_add > chunk_size) ? chunk_size : (size_t)bytes_to_add;
-        fwrite(chunk, 1, to_write, file);
-        bytes_to_add -= to_write;
-    }
-
-    free(chunk);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,7 +166,7 @@ void randomize(FILE *file){
 
     // Allocate a 1MB buffer chunk on the Heap
     size_t chunk_size = 1024 * 1024;
-    char *chunk = malloc(chunk_size);
+    char *chunk = malloc_size;
     
     if (!chunk) {
         // Fallback safety: write byte-by-byte if heap memory allocation fails
@@ -242,6 +219,7 @@ void defaultize(FILE *file){
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 void show_help() {
+    // ASCII art header and usage instructions
     fprintf(stdout, "        .__                   __      _____       \n");
     fprintf(stdout, "   ____ |  |__   ____   ____ |  | ___/ ____\\______\n");
     fprintf(stdout, " _/ ___\\|  |  \\ /  _ \\ /    \\|  |/ /\\   __\\/  ___/\n");
@@ -254,20 +232,21 @@ void show_help() {
     fprintf(stderr, "  --null                        Add null bytes\n");
     fprintf(stderr, "  --random                      Add random data\n");
     fprintf(stderr, "  --data <string>               Add specific text data\n");
-    fprintf(stderr, "  --default                     Add the files data over\n");
+    fprintf(stderr, "  --copy                     Add the files data over\n");
     fprintf(stderr, "  --size <int,(MB/GB/TB/KB)>    Set total size target\n");
-    fprintf(stderr, "  --out <fiiename>                Specify output file (default: input file)\n");
+    fprintf(stderr, "  --out <fiiename>                Specify output file\n");
     fprintf(stderr, "  --append                      Append data to existing file\n");
     fprintf(stderr, "  --read <filename>               Read data hidden with  \"--data\"\n");
     fprintf(stderr, "  --readsize <int,(MB/GB/TB/KB)>     Read specific size from file (default: all)\n");
     fprintf(stderr, "  --help                        Show this instruction panel\n");
-    fprintf(stderr, "By default the program will generate the file with its size doubled with its contents doubled  \"\n");
+    fprintf(stderr, "By default the program will generate the file with its size doubled with its contents doubled with \"--null\"\n");
     fprintf(stderr, "Example: chonkfs <file> --null --data \"hello world\" --size 100MB\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-void allocate_malloc(){
-
+void allocate_malloc(FILE **file, int calls){
+//calculate required chunk by each and provide appropriate heap allocation and have the chunk filled with null data
+ 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////
 void read_data(){
