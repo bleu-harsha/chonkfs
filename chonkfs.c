@@ -17,12 +17,18 @@
 #include <time.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 void nultility(FILE *file);
 void datatize(char *data, FILE *file);
 void randomize(FILE *file);
 void defaultize(FILE *file);
 void show_help();
+void allocate_malloc();
+void read_data();
+void read_size();
+void output_file();
 uint64_t convert_to_bytes(const char *size_str);
 uint64_t size_to_reach = 0;
 
@@ -139,7 +145,35 @@ void nultility(FILE *file){
 ////////////////////////////////////////////////////////////////////////////////////////////
 void datatize(char *data, FILE *file){
     fseek(file, 0, SEEK_END);
-    fputs(data, file);
+    long current_size = ftell(file);
+
+    if(size_to_reach == 0 || (uint64_t)current_size >= size_to_reach) return;
+    uint64_t bytes_to_add = size_to_reach - (uint64_t)current_size;
+
+    size_t chunk_size = 1024 * 1024;
+    char *chunk = malloc(chunk_size);
+    if (!chunk){
+    // Fallback safety: write byte-by-byte if heap memory allocation fails
+    char *ptr = data;
+    for(uint64_t i = 0; i < bytes_to_add;i++){
+        fputc(*ptr, file);
+        i ++;
+    }
+    return;
+}
+
+    size_t data_len = strlen(data);
+    size_t offset = 0;
+    size_t to_write = 0;
+    while( bytes_to_add > 0 ){
+    to_write = bytes_to_add > chunk_size?chunk_size:(size_t)bytes_to_add;
+        for(size_t i = 0; i < to_write; i++){
+            chunk[i] = data[(offset + i ) % data_len];
+            offset = (offset + 1 )% data_len;
+        }
+    fwrite(chunk, 1,to_write,file);
+    bytes_to_add -= to_write;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,12 +254,33 @@ void show_help() {
     fprintf(stderr, "  --null                        Add null bytes\n");
     fprintf(stderr, "  --random                      Add random data\n");
     fprintf(stderr, "  --data <string>               Add specific text data\n");
+    fprintf(stderr, "  --default                     Add the files data over\n");
     fprintf(stderr, "  --size <int,(MB/GB/TB/KB)>    Set total size target\n");
+    fprintf(stderr, "  --out <fiiename>                Specify output file (default: input file)\n");
+    fprintf(stderr, "  --append                      Append data to existing file\n");
+    fprintf(stderr, "  --read <filename>               Read data hidden with  \"--data\"\n");
+    fprintf(stderr, "  --readsize <int,(MB/GB/TB/KB)>     Read specific size from file (default: all)\n");
     fprintf(stderr, "  --help                        Show this instruction panel\n");
-    fprintf(stderr, "By default the program will generate the file with its size doubled\"\n");
-    fprintf(stderr, "Example: chonkfs <file> --null --data \"son\" --size 100MB\n");
+    fprintf(stderr, "By default the program will generate the file with its size doubled with its contents doubled  \"\n");
+    fprintf(stderr, "Example: chonkfs <file> --null --data \"hello world\" --size 100MB\n");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+void allocate_malloc(){
+
+}
+///////////////////////////////////////////////////////////////////////////////////////////////
+void read_data(){
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+void read_size(){
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
+void output_file(){
+
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////
 uint64_t convert_to_bytes(const char *size_str) {
     char *endptr;
