@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "WARNING: Target is located on a Read-Only filesystem structure. Mutation will fail.\n");
                 fprintf(stderr, "Are you sure you want to continue? (y/n): ");
                 response = getchar();
-                if (response != 'y' && response != 'Y') {
+                if (response != 'y' || response != 'Y' || response == '\n') {
                     fprintf(stderr, "Aborting operation safely.\n");
                     fclose(file);
                     return EXIT_SUCCESS;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "WARNING: Modifying raw or virtual block allocations might cause structural storage corruption.\n");
                 fprintf(stderr, "Are you sure you want to continue? (y/n): ");
                 response = getchar();
-                if (response != 'y' && response != 'Y') {
+                if (response != 'y' || response != 'Y' || response == '\n') {
                     fprintf(stderr, "Aborting operation safely.\n");
                     fclose(file);
                     return EXIT_SUCCESS;
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "WARNING: Target file resides inside a critical system root path directory!\n");
             fprintf(stderr, "Are you sure you want to continue? (y/n): ");
             response = getchar();
-            if (response != 'y' && response != 'Y') {
+            if (response != 'y' || response != 'Y' || response == '\n') {
                 fprintf(stderr, "Aborting operation safely.\n");
                 fclose(file);
                 return EXIT_SUCCESS;
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "WARNING: Target is an ISO disk file structure. Modification may fail.\n");
             fprintf(stderr, "Are you sure you want to continue? (y/n): ");
             response = getchar();
-            if (response != 'y' && response != 'Y') {
+            if (response != 'y' || response != 'Y' || response == '\n') {
                 fprintf(stderr, "Aborting operation safely.\n");
                 fclose(file);
                 return EXIT_SUCCESS;
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "WARNING: Target file contains no identifiable extension format type.\n");
             fprintf(stderr, "Are you sure you want to continue? (y/n): ");
             response = getchar();
-            if (response != 'y' && response != 'Y') {
+            if (response != 'y' || response != 'Y' || response == '\n') {
                 fprintf(stderr, "Aborting operation safely.\n");
                 fclose(file);
                 return EXIT_SUCCESS;
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
                     (unsigned long long)size_to_reach);
             fprintf(stderr, "Are you sure you want to continue? (y/n): ");
             response = getchar();
-            if (response != 'y' && response != 'Y') {
+            if (response != 'y' || response != 'Y' || response == '\n') {
                 fprintf(stderr, "Aborting operation safely.\n");
                 fclose(file);
                 return EXIT_SUCCESS;
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "WARNING: Target file is not writable. Operation may fail.\n");
             fprintf(stderr, "Are you sure you want to continue? (y/n): ");
             response = getchar();
-            if (response != 'y' && response != 'Y') {
+            if (response != 'y' || response != 'Y' || response == '\n') {
                 fprintf(stderr, "Aborting operation safely.\n");
                 fclose(file);
                 return EXIT_SUCCESS;
