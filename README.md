@@ -6,13 +6,7 @@
 
 > make files heavier than they were.
 
-`chonkfs` is a tiny C utility that unnecessarily increases file sizes while keeping the original file functional.
-
-Why?
-No reason.
-Maybe a prank.
-Maybe psychological warfare.
-Maybe your 2MB image deserves to identify as 14GB.
+`chonkfs` is a tiny C utility that unnecessarily increases file sizes while keeping the original file functional
 
 ---
 
