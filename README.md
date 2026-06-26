@@ -25,19 +25,6 @@ The size becomes deeply concerning.
 
 ---
 
-
-## features
-
-- lightweight single-binary utility
-- works on Linux and Windows
-- supports multiple chonking modes
-- keeps original file untouched
-- append-only design for maximum survivability
-- no dependencies
-- written in raw C because suffering builds character
-
----
-
 ## usage
 
 ```bash
